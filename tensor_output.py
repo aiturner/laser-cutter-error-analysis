@@ -1,6 +1,6 @@
 import numpy as np
-import cv2
-import os
+#import cv2
+#import os
 import re
 from pathlib import Path
 
@@ -74,11 +74,11 @@ def process_grid_images(directory_path, verbose=True):
             processed[(row, col)] = (center_x, center_y)
             
             if verbose:
-                print(f"  ✅ ({row},{col}) -> ({center_x}, {center_y})")
+                print(f"({row},{col}) -> ({center_x}, {center_y})")
                 
         except Exception as e:
             if verbose:
-                print(f"  ❌ Failed: {str(e)}")
+                print(f"Failed: {str(e)}")
             missing.append((row, col))
 
     # Check for missing positions
@@ -88,7 +88,7 @@ def process_grid_images(directory_path, verbose=True):
                 missing.append((r, c))
     
     if missing and verbose:
-        print(f"\n⚠️  Missing images at positions: {missing}")
+        print(f"\n Missing images at positions: {missing}")
 
             # Print summary
     print(f"\n{'='*50}")
@@ -132,6 +132,6 @@ if __name__ == "__main__":
     
         # Save as .npy file (for later use)
         np.save('output_tensor.npy', tensor)
-        print("\n✅ Tensor saved to output_tensor.npy")
+        print("\nTensor saved to output_tensor.npy")
     else:
         print("No results to display")
