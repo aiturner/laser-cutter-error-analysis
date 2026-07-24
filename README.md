@@ -16,6 +16,7 @@ This tool processes images of calibration circles arranged in a grid pattern and
 
 ## Project Structure
 laser_cutter_accuracy/
+
 ├── contour_detection.py # Circle center detection
 ├── tensor_output.py # Grid processing & tensor creation
 ├── images_circle_nxm/ # Input images (place your images here)
