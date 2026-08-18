@@ -8,6 +8,7 @@ def get_center_line(line_group):
     2. Split lines into upper and lower groups based on initial estimate
     3. Average each group separately
     4. Average the two group averages to get refined center line
+
     """
     if not line_group:
         return None
@@ -20,70 +21,72 @@ def get_center_line(line_group):
     if abs(dx) >= abs(dy):
         # More horizontal - use y-values
         
-        # Step 1: Get initial estimate (simple average of all lines)
-        initial_y = int(np.mean([l[1] for l in line_group]))
+        # Get initial estimate (simple average of all lines)
+        initial_y = int(np.mean([line[1] for line in line_group]))
         
-        # Step 2: Split into upper and lower groups based on initial estimate
-        upper_group = [l for l in line_group if l[1] < initial_y]
-        lower_group = [l for l in line_group if l[1] > initial_y]
+        # Split into upper and lower groups based on initial estimate (allows the upper and lower edge of the cross to be separated)
+        upper_group = [line for line in line_group if line[1] < initial_y]
+        lower_group = [line for line in line_group if line[1] > initial_y]
         
-        # Edge case: if all lines are on one side
+        # Edge case: if all lines are on one side (if this happens you should adjust thresholds)
         if not upper_group or not lower_group:
             # Fall back to simple average
-            avg_y = int(np.mean([l[1] for l in line_group]))
-            avg_x1 = int(np.mean([l[0] for l in line_group]))
-            avg_x2 = int(np.mean([l[2] for l in line_group]))
+            avg_y = int(np.mean([line[1] for line in line_group]))
+            avg_x1 = int(np.mean([line[0] for line in line_group]))
+            avg_x2 = int(np.mean([line[2] for line in line_group]))
             return (avg_x1, avg_y, avg_x2, avg_y)
         
-        # Step 3: Average each group separately
-        upper_avg_y = int(np.mean([l[1] for l in upper_group]))
-        lower_avg_y = int(np.mean([l[1] for l in lower_group]))
+        # Average each group separately
+        upper_avg_y = int(np.mean([line[1] for line in upper_group])) 
+        lower_avg_y = int(np.mean([line[1] for line in lower_group]))
         
-        # Step 4: Average the two group averages
+        # Average the two group averages
         center_y = int((upper_avg_y + lower_avg_y) / 2)
         
         # Average x-coordinates from all lines
-        avg_x1 = int(np.mean([l[0] for l in line_group]))
-        avg_x2 = int(np.mean([l[2] for l in line_group]))
+        avg_x1 = int(np.mean([line[0] for line in line_group]))
+        avg_x2 = int(np.mean([line[2] for line in line_group]))
         
         return (avg_x1, center_y, avg_x2, center_y)
     
     else:
         # More vertical - use x-values
         
-        # Step 1: Get initial estimate (simple average of all lines)
-        initial_x = int(np.mean([l[0] for l in line_group]))
+        # Get initial estimate (simple average of all lines)
+        initial_x = int(np.mean([line[0] for line in line_group]))
         
-        # Step 2: Split into left and right groups based on initial estimate
-        left_group = [l for l in line_group if l[0] < initial_x]
-        right_group = [l for l in line_group if l[0] > initial_x]
+        # Split into left and right groups based on initial estimate (allows the left and right edge of the cross to be separated)
+        left_group = [line for line in line_group if line[0] < initial_x]
+        right_group = [line for line in line_group if line[0] > initial_x]
         
         # Edge case: if all lines are on one side
         if not left_group or not right_group:
             # Fall back to simple average
-            avg_x = int(np.mean([l[0] for l in line_group]))
-            avg_y1 = int(np.mean([l[1] for l in line_group]))
-            avg_y2 = int(np.mean([l[3] for l in line_group]))
+            avg_x = int(np.mean([line[0] for line in line_group]))
+            avg_y1 = int(np.mean([line[1] for line in line_group]))
+            avg_y2 = int(np.mean([line[3] for line in line_group]))
             return (avg_x, avg_y1, avg_x, avg_y2)
         
-        # Step 3: Average each group separately
-        left_avg_x = int(np.mean([l[0] for l in left_group]))
-        right_avg_x = int(np.mean([l[0] for l in right_group]))
+        # Average each group separately
+        left_avg_x = int(np.mean([line[0] for line in left_group]))
+        right_avg_x = int(np.mean([line[0] for line in right_group]))
         
-        # Step 4: Average the two group averages
+        # Average the two group averages
         center_x = int((left_avg_x + right_avg_x) / 2)
         
         # Average y-coordinates from all lines
-        avg_y1 = int(np.mean([l[1] for l in line_group]))
-        avg_y2 = int(np.mean([l[3] for l in line_group]))
+        avg_y1 = int(np.mean([line[1] for line in line_group]))
+        avg_y2 = int(np.mean([line[3] for line in line_group]))
         
         return (center_x, avg_y1, center_x, avg_y2)
 
 
 def find_cross_center(image_path, debug = False):
+
     """
     Find the center of the central cross in an image using Hough Line Transform.
     """
+
     # Read image
     img = cv2.imread(image_path)
     if img is None:
@@ -92,16 +95,16 @@ def find_cross_center(image_path, debug = False):
     
     height, width = img.shape[:2]
     
-    # 1. Preprocessing with binary threshold
+    # Preprocessing with binary threshold
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     # Apply binary threshold to make cross solid white on black background
     _, binary = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
     
-    # Find edges on the binary image (much cleaner!)
+    # Find edges on the binary image 
     edges = cv2.Canny(binary, 50, 150)
     
-    # 2. Detect lines using Hough Transform (adjusted for distorted crosses)
+    # Detect lines using Hough Transform 
     lines = cv2.HoughLinesP(
         edges, 
         rho=1, 
@@ -115,7 +118,7 @@ def find_cross_center(image_path, debug = False):
         print("No lines detected")
         return None
     
-    # 3. Filter lines to keep only those in the center box
+    # Filter lines to keep only those in the center box (only detects the central cross)
     center_x, center_y = width // 2, height // 2
     search_radius_x = width // 6
     search_radius_y = height // 6
@@ -131,7 +134,7 @@ def find_cross_center(image_path, debug = False):
         print("Not enough lines found near center")
         return None
     
-    # 4. Separate lines into horizontal and vertical groups (wider tolerance)
+    # Separate lines into horizontal and vertical groups
     horizontal = []
     vertical = []
     
@@ -140,7 +143,7 @@ def find_cross_center(image_path, debug = False):
         dy = y2 - y1
         angle = np.degrees(np.arctan2(abs(dy), abs(dx)))
         
-        # INCREASED TOLERANCE for distorted crosses
+        # Set tolerance for vertical and horisontal lines.
         if angle < 15 or angle > 165:  # Was 20/160
             horizontal.append((x1, y1, x2, y2))
         elif 75 < angle < 105:  # Was 70-110
@@ -157,7 +160,7 @@ def find_cross_center(image_path, debug = False):
     if best_h is None or best_v is None:
         return None
     
-    # 6. Compute intersection point
+    # Compute intersection point of the horisontal and vertical arms of the cross
     def line_intersection(line1, line2):
         x1, y1, x2, y2 = line1
         x3, y3, x4, y4 = line2
@@ -177,7 +180,7 @@ def find_cross_center(image_path, debug = False):
         print("Lines are parallel, no intersection")
         return None
     
-    # 7. Draw detection results
+    # Draw detection results
     if debug:
         debug_img = img.copy()
     
