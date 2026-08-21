@@ -151,4 +151,4 @@ def find_theta_csv(input_file):
 
 if __name__ == "__main__":
     #theta = find_theta_csv("output_tensor_Test5.csv")
-    plot_data_with_grid("offset_data.csv","offset_data")
+    plot_data_with_grid("offset_data.csv","output_tensor_Test6Center_mm.csv")

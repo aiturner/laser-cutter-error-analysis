@@ -99,7 +99,7 @@ def find_cross_center(image_path, debug = False):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     # Apply binary threshold to make cross solid white on black background
-    _, binary = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+    _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
     
     # Find edges on the binary image 
     edges = cv2.Canny(binary, 50, 150)
@@ -144,9 +144,9 @@ def find_cross_center(image_path, debug = False):
         angle = np.degrees(np.arctan2(abs(dy), abs(dx)))
         
         # Set tolerance for vertical and horisontal lines.
-        if angle < 15 or angle > 165:  # Was 20/160
+        if angle < 5 or angle > 175:  # Was 20/160
             horizontal.append((x1, y1, x2, y2))
-        elif 75 < angle < 105:  # Was 70-110
+        elif 85 < angle < 95:  # Was 70-110
             vertical.append((x1, y1, x2, y2))
     
     if not horizontal or not vertical:
@@ -212,7 +212,7 @@ def find_cross_center(image_path, debug = False):
 
 # Example usage
 if __name__ == "__main__":
-    result = find_cross_center("/Users/arthurturner/Documents/Projects/laser_cutter_accuracy/Test4/6 (2).bmp")
+    result = find_cross_center("/Users/arthurturner/Documents/Projects/laser_cutter_accuracy/Test 6/9 (1).bmp", debug=True)
     
     if result:
         print(f"Cross center found at: ({result[0]}, {result[1]})")
