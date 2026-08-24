@@ -17,3 +17,9 @@ output/
 
 *.tmp
 *.temp
+
+
+RESULTS/
+UNUSED/
+Test 6/
+I_O_data/
