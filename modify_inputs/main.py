@@ -1,6 +1,7 @@
-from convert_affine_polynomial import calibrate_galvo_polynomial , convert_positions_polynomial , angle_to_level, rotate_data, extract_from_txt , np_to_csv , create_commanded_grid , replace_txt
 import numpy as np
 import pandas as pd
+
+from convert_affine_polynomial import calibrate_galvo_polynomial , convert_positions_polynomial , angle_to_level, rotate_data, extract_from_txt , np_to_csv , create_commanded_grid , replace_txt
 
 if __name__ == "__main__":
     npy_filepath = input("Filename of the npy array containing offset data (offset_data.npy) : ")
@@ -21,7 +22,6 @@ if __name__ == "__main__":
 
     commanded = create_commanded_grid(grid_size, grid_size, grid_spacing)
     commanded_reshape = commanded.transpose(1, 2, 0).reshape(-1, 2)
-
     positions = offset_data + commanded
 
     #angle = - angle_to_level(positions, origin_position)
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     print(f"YPARA= \n {ypara}")
 
     print(f"\n {stats}")
-    
+
     points_relfilepath = input("txt Relative filepath containing points to be modified (I_O_data/GalvoCrossGrid_9.txt) : ")
     points = extract_from_txt(points_relfilepath)
     new_points = convert_positions_polynomial(points, xpara, ypara, degree=3)

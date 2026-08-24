@@ -5,6 +5,7 @@ import os
 
 from center_coords_linefitting import find_cross_center
 from tensor_from_directory import add_positions
+from rotating import rotate_data , angle_to_level, offsets_to_positions
 
 def pixels_to_mm(tensor, k = 398.642):
     """
@@ -47,11 +48,11 @@ def build_tensor():
         numpy array: Calibration tensor of shape (2, rows, cols)
     """
 
-    print("\n STEP 1: Define Grid Size")
+    print("\n STEP 1.1 : Define Grid Size")
     while True:
         try:
-            rows = int(input("  Number of rows (N): "))
-            cols = int(input("  Number of columns (M): "))
+            rows = int(input("  Size of NxN grid  (N): "))
+            cols = rows
             if rows > 0 and cols > 0:
                 break
             print("Grid size must be positive integers. Try again.")
@@ -61,14 +62,17 @@ def build_tensor():
     # Initalise a 3 dimentional tensor with size that user inputs
     tensor = np.full((2, rows, cols), -1, dtype=np.float32)
 
+    print("\n STEP 1.2: Define Grid Spacing (mm)")
+    spacing = float(input(" Spacing between two points :"))
+
     print("\n STEP 2: Set Origin Position")
     # Sets the origin position, this position will have zero offset due to lense distortion 
     # This point can be used to give a relative zero error position for the other points
 
     while True:
         try:
-            origin_row = int(input(f"  Origin row (1-{rows}): "))
-            origin_col = int(input(f"  Origin col (1-{cols}): "))
+            origin_row = int(input(f"  Origin positon (M, M) grid (1-{rows}): "))
+            origin_col = origin_row
             if 1 <= origin_row <= rows and 1 <= origin_col <= cols:
                 break
             print(f"Row must be 1-{rows}, Col must be 1-{cols}. Try again.")
@@ -85,10 +89,11 @@ def build_tensor():
         print("2  Save tensor and exit")
         print("3  Show current tensor")
         print("4  Convert from pix to mm")
-        print("5  Exit without saving")
+        print("5  Rotate tensor to level")
+        print("6  Exit without saving")
 
 
-        choice = input("\nSelect option (1-5): ").strip()
+        choice = input("\nSelect option (1-6): ").strip()
         
         if choice == '1':
             # Give the user an option of offset detection method.
@@ -148,6 +153,29 @@ def build_tensor():
             tensor = pixels_to_mm(tensor)
 
         elif choice == '5':
+            # Finds rotation angle due to camera misalignment
+            # Rotates data to correct for this misalignment
+
+            # Change to convention x pos right y pos up
+            
+            offset_tensor = np.zeros_like(tensor)
+            offset_tensor[0,:,:] = tensor[0,:,:]
+            offset_tensor[1,:,:] = -tensor[1,:,:]
+
+            positions_tensor, base_positions = offsets_to_positions(offset_tensor, rows, spacing)
+            angle = angle_to_level(positions_tensor, origin_row)
+            print(f"Angle to level = {angle} radians")
+
+            rotated_positions = rotate_data(positions_tensor, angle)
+            offset_tensor = rotated_positions  - base_positions
+
+            tensor[0,:,:] = offset_tensor[0,:,:]
+            tensor[1,:,:] = -offset_tensor[1,:,:]
+
+            print(f"Tensor has been rotated by {angle}")
+
+
+        elif choice == '6':
             return tensor
         
         else:
