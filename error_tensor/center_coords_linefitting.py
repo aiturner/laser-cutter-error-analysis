@@ -1,7 +1,105 @@
 import cv2
 import numpy as np
-
 def get_center_line(line_group):
+    """
+    Find center line by:
+    1. Split lines into upper/lower groups based on initial y estimate
+    2. Split each group into left/right based on initial x estimate
+    3. Average all 4 groups to find center point
+    """
+    def robust_mean(values):
+        """Remove outliers using IQR method (most common statistical approach)"""
+        if len(values) == 0:
+            return 0
+    
+        sorted_vals = np.sort(values)
+        q1 = np.percentile(sorted_vals, 25)
+        q3 = np.percentile(sorted_vals, 75)
+        iqr = q3 - q1
+    
+        # Define outlier bounds (1.5 * IQR is standard)
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+    
+        # Filter out outliers
+        filtered = [v for v in values if lower_bound <= v <= upper_bound]
+    
+        return np.mean(filtered) if filtered else np.mean(values)
+    
+    if not line_group:
+        return None
+    
+    # Check if lines are more horizontal or vertical
+    sample_line = line_group[0]
+    dx = sample_line[2] - sample_line[0]
+    dy = sample_line[3] - sample_line[1]
+    initial_y = int(robust_mean([line[1] for line in line_group]))
+    initial_x = int(robust_mean([line[0] for line in line_group]))
+
+    if abs(dx) >= abs(dy):
+        # More horizontal - use y-values for vertical split, x-values for horizontal split
+        upper_group = [line for line in line_group if line[1] < initial_y]
+        lower_group = [line for line in line_group if line[1] > initial_y]
+        
+        # Edge case: if all lines are on one side
+        if not upper_group or not lower_group:
+            # Fall back to simple average
+            avg_x = int(robust_mean([line[0] for line in line_group]))
+            avg_y = int(robust_mean([line[1] for line in line_group]))
+            return (avg_x, avg_y, avg_x, avg_y)
+        
+        # Step 3: Split upper and lower groups into left/right based on x
+        upper_left = [line for line in upper_group if line[0] < initial_x]
+        upper_right = [line for line in upper_group if line[0] > initial_x]
+        lower_left = [line for line in lower_group if line[0] < initial_x]
+        lower_right = [line for line in lower_group if line[0] > initial_x]
+
+        upper_left_avg_y = int(robust_mean([line[1] for line in upper_left])) 
+        upper_right_avg_y = int(robust_mean([line[1] for line in upper_right])) 
+        lower_left_avg_y = int(robust_mean([line[1] for line in lower_left]))
+        lower_right_avg_y = int(robust_mean([line[1] for line in lower_right]))
+                
+        # Average the two group averages
+        center_y = int((upper_left_avg_y + upper_right_avg_y +lower_left_avg_y +lower_right_avg_y ) / 4)
+                
+        # Average x-coordinates from all lines
+        avg_x1 = int(robust_mean([line[0] for line in line_group]))
+        avg_x2 = int(robust_mean([line[2] for line in line_group]))
+        return (avg_x1, center_y, avg_x2, center_y)
+    else:
+        # More vertical - use x-values for horizontal split, y-values for vertical split
+        left_group = [line for line in line_group if line[0] < initial_x]
+        right_group = [line for line in line_group if line[0] > initial_x]
+        
+        # Edge case: if all lines are on one side
+        if not left_group or not right_group:
+            # Fall back to simple average
+            avg_x = int(robust_mean([line[0] for line in line_group]))
+            avg_y = int(robust_mean([line[1] for line in line_group]))
+            return (avg_x, avg_y, avg_x, avg_y)
+        
+        # Split left and right groups into upper/lower based on y
+        left_upper = [line for line in left_group if line[1] < initial_y]
+        left_lower = [line for line in left_group if line[1] > initial_y]
+        right_upper = [line for line in right_group if line[1] < initial_y]
+        right_lower = [line for line in right_group if line[1] > initial_y]
+        
+        # Average x-values for each group
+        left_upper_avg_x = int(robust_mean([line[0] for line in left_upper])) 
+        left_lower_avg_x = int(robust_mean([line[0] for line in left_lower])) 
+        right_upper_avg_x = int(robust_mean([line[0] for line in right_upper]))
+        right_lower_avg_x = int(robust_mean([line[0] for line in right_lower]))
+        
+        # Average the four group averages
+        center_x = int((left_upper_avg_x + left_lower_avg_x + right_upper_avg_x + right_lower_avg_x) / 4)
+        
+        # Average y-coordinates from all lines
+        avg_y1 = int(robust_mean([line[1] for line in line_group]))
+        avg_y2 = int(robust_mean([line[3] for line in line_group]))
+        return (center_x, avg_y1, center_x, avg_y2)
+
+
+def get_center_line1(line_group):
     """
     Find center line by:
     1. Estimate initial center line (simple average)
@@ -23,7 +121,8 @@ def get_center_line(line_group):
     sample_line = line_group[0]
     dx = sample_line[2] - sample_line[0]
     dy = sample_line[3] - sample_line[1]
-    
+
+
     if abs(dx) >= abs(dy):
         # More horizontal - use y-values
         
@@ -115,9 +214,9 @@ def find_cross_center(image_path, debug = False):
         edges, 
         rho=1, 
         theta=np.pi/180, 
-        threshold=30,      # Lowered to detect more lines
-        minLineLength=20,  # Lowered from 30
-        maxLineGap=15      # Increased from 10
+        threshold=30,     
+        minLineLength=20,  
+        maxLineGap=15      
     )
     
     if lines is None:
@@ -137,7 +236,7 @@ def find_cross_center(image_path, debug = False):
             filtered_lines.append((x1, y1, x2, y2))
     
     if len(filtered_lines) < 2:
-        print("Not enough lines found near center")
+        print("Not enough lines found on central cross")
         return None
     
     # Separate lines into horizontal and vertical groups
@@ -218,7 +317,8 @@ def find_cross_center(image_path, debug = False):
 
 # Example usage
 if __name__ == "__main__":
-    result = find_cross_center("/Users/arthurturner/Documents/Projects/laser_cutter_accuracy/Test 6/9 (4).bmp", debug=True)
+
+    result = find_cross_center("/Users/arthurturner/Documents/Projects/laser_cutter_accuracy/Test 6/1 (1).bmp", debug=True)
     
     if result:
         print(f"Cross center found at: ({result[0]}, {result[1]})")

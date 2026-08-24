@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import re
 import os
 
@@ -102,13 +103,21 @@ def build_tensor():
                 for image_file in os.listdir(directory_path):
                     row, col = parse_image_name(image_file)
                     image_path = os.path.join(directory_path, image_file)
-
+                    print(row)
+                    print(col)
                     center = find_cross_center(image_path, debug = False)
                     if center:
                         x, y = center
                         tensor[0, row-1, col-1] = x
                         tensor[1, row-1, col-1] = y
-                np.save("absolute_pos_pix.npy" ,tensor)
+
+
+                np.save("absolute_pos_pix1.npy" ,tensor)
+
+                reshaped = tensor.reshape(2, -1).T
+                df = pd.DataFrame(reshaped, columns=['x-opencv', 'y-opencv'])
+                df.to_csv('absolute_pos_pix1.csv', index=False)
+
                 # Corrects all positions by subtracting the pixel position of the origin point center
                 tensor[0,:,:] = tensor[0,:,:] - tensor[0,origin_row-1,origin_col-1]
                 tensor[1,:,:] = tensor[1,:,:] - tensor[1,origin_row-1,origin_col-1]
