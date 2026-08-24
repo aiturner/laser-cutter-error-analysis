@@ -116,12 +116,11 @@ def build_tensor():
                         tensor[0, row-1, col-1] = x
                         tensor[1, row-1, col-1] = y
 
-
-                np.save("absolute_pos_pix1.npy" ,tensor)
-
-                reshaped = tensor.reshape(2, -1).T
-                df = pd.DataFrame(reshaped, columns=['x-opencv', 'y-opencv'])
-                df.to_csv('absolute_pos_pix1.csv', index=False)
+                
+                #np.save("absolute_pos_pix1.npy" ,tensor)
+                #reshaped = tensor.reshape(2, -1).T
+                #df = pd.DataFrame(reshaped, columns=['x-opencv', 'y-opencv'])
+                #df.to_csv('absolute_pos_pix1.csv', index=False)
 
                 # Corrects all positions by subtracting the pixel position of the origin point center
                 tensor[0,:,:] = tensor[0,:,:] - tensor[0,origin_row-1,origin_col-1]
@@ -157,7 +156,7 @@ def build_tensor():
             # Rotates data to correct for this misalignment
 
             # Change to convention x pos right y pos up
-            
+
             offset_tensor = np.zeros_like(tensor)
             offset_tensor[0,:,:] = tensor[0,:,:]
             offset_tensor[1,:,:] = -tensor[1,:,:]
