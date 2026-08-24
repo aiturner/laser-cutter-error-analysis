@@ -103,8 +103,8 @@ def build_tensor():
                 for image_file in os.listdir(directory_path):
                     row, col = parse_image_name(image_file)
                     image_path = os.path.join(directory_path, image_file)
-                    print(row)
-                    print(col)
+                    #print(row)
+                    #print(col)
                     center = find_cross_center(image_path, debug = False)
                     if center:
                         x, y = center
