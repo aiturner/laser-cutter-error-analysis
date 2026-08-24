@@ -10,6 +10,12 @@ def get_center_line(line_group):
     4. Average the two group averages to get refined center line
 
     """
+    def robust_mean(values):
+            sorted_vals = np.sort(values)
+            lower_idx = int(0.05 * len(sorted_vals))
+            upper_idx = int(0.95 * len(sorted_vals))
+            return np.mean(sorted_vals[lower_idx:upper_idx])
+    
     if not line_group:
         return None
     
@@ -22,7 +28,7 @@ def get_center_line(line_group):
         # More horizontal - use y-values
         
         # Get initial estimate (simple average of all lines)
-        initial_y = int(np.mean([line[1] for line in line_group]))
+        initial_y = int(robust_mean([line[1] for line in line_group]))
         
         # Split into upper and lower groups based on initial estimate (allows the upper and lower edge of the cross to be separated)
         upper_group = [line for line in line_group if line[1] < initial_y]
@@ -31,21 +37,21 @@ def get_center_line(line_group):
         # Edge case: if all lines are on one side (if this happens you should adjust thresholds)
         if not upper_group or not lower_group:
             # Fall back to simple average
-            avg_y = int(np.mean([line[1] for line in line_group]))
-            avg_x1 = int(np.mean([line[0] for line in line_group]))
-            avg_x2 = int(np.mean([line[2] for line in line_group]))
+            avg_y = int(robust_mean([line[1] for line in line_group]))
+            avg_x1 = int(robust_mean([line[0] for line in line_group]))
+            avg_x2 = int(robust_mean([line[2] for line in line_group]))
             return (avg_x1, avg_y, avg_x2, avg_y)
         
         # Average each group separately
-        upper_avg_y = int(np.mean([line[1] for line in upper_group])) 
-        lower_avg_y = int(np.mean([line[1] for line in lower_group]))
+        upper_avg_y = int(robust_mean([line[1] for line in upper_group])) 
+        lower_avg_y = int(robust_mean([line[1] for line in lower_group]))
         
         # Average the two group averages
         center_y = int((upper_avg_y + lower_avg_y) / 2)
         
         # Average x-coordinates from all lines
-        avg_x1 = int(np.mean([line[0] for line in line_group]))
-        avg_x2 = int(np.mean([line[2] for line in line_group]))
+        avg_x1 = int(robust_mean([line[0] for line in line_group]))
+        avg_x2 = int(robust_mean([line[2] for line in line_group]))
         
         return (avg_x1, center_y, avg_x2, center_y)
     
@@ -53,7 +59,7 @@ def get_center_line(line_group):
         # More vertical - use x-values
         
         # Get initial estimate (simple average of all lines)
-        initial_x = int(np.mean([line[0] for line in line_group]))
+        initial_x = int(robust_mean([line[0] for line in line_group]))
         
         # Split into left and right groups based on initial estimate (allows the left and right edge of the cross to be separated)
         left_group = [line for line in line_group if line[0] < initial_x]
@@ -62,21 +68,21 @@ def get_center_line(line_group):
         # Edge case: if all lines are on one side
         if not left_group or not right_group:
             # Fall back to simple average
-            avg_x = int(np.mean([line[0] for line in line_group]))
-            avg_y1 = int(np.mean([line[1] for line in line_group]))
-            avg_y2 = int(np.mean([line[3] for line in line_group]))
+            avg_x = int(robust_mean([line[0] for line in line_group]))
+            avg_y1 = int(robust_mean([line[1] for line in line_group]))
+            avg_y2 = int(robust_mean([line[3] for line in line_group]))
             return (avg_x, avg_y1, avg_x, avg_y2)
         
         # Average each group separately
-        left_avg_x = int(np.mean([line[0] for line in left_group]))
-        right_avg_x = int(np.mean([line[0] for line in right_group]))
+        left_avg_x = int(robust_mean([line[0] for line in left_group]))
+        right_avg_x = int(robust_mean([line[0] for line in right_group]))
         
         # Average the two group averages
         center_x = int((left_avg_x + right_avg_x) / 2)
         
         # Average y-coordinates from all lines
-        avg_y1 = int(np.mean([line[1] for line in line_group]))
-        avg_y2 = int(np.mean([line[3] for line in line_group]))
+        avg_y1 = int(robust_mean([line[1] for line in line_group]))
+        avg_y2 = int(robust_mean([line[3] for line in line_group]))
         
         return (center_x, avg_y1, center_x, avg_y2)
 
@@ -177,7 +183,7 @@ def find_cross_center(image_path, debug = False):
     center = line_intersection(best_h, best_v)
     
     if center is None:
-        print("Lines are parallel, no intersection")
+        print(f"Lines are parallel, no intersection{image_path}")
         return None
     
     # Draw detection results
@@ -212,7 +218,7 @@ def find_cross_center(image_path, debug = False):
 
 # Example usage
 if __name__ == "__main__":
-    result = find_cross_center("/Users/arthurturner/Documents/Projects/laser_cutter_accuracy/Test 6/9 (1).bmp", debug=True)
+    result = find_cross_center("/Users/arthurturner/Documents/Projects/laser_cutter_accuracy/Test 6/9 (4).bmp", debug=True)
     
     if result:
         print(f"Cross center found at: ({result[0]}, {result[1]})")

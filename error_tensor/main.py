@@ -108,7 +108,7 @@ def build_tensor():
                         x, y = center
                         tensor[0, row-1, col-1] = x
                         tensor[1, row-1, col-1] = y
-
+                np.save("absolute_pos_pix.npy" ,tensor)
                 # Corrects all positions by subtracting the pixel position of the origin point center
                 tensor[0,:,:] = tensor[0,:,:] - tensor[0,origin_row-1,origin_col-1]
                 tensor[1,:,:] = tensor[1,:,:] - tensor[1,origin_row-1,origin_col-1]
@@ -147,3 +147,7 @@ def build_tensor():
 
 if __name__ == "__main__":
     tensor = build_tensor()
+    # outputs a 2,N,N Numpy array containing data about the offsets of each point, 
+    # conventions of 
+    # x is positive to the right
+    # y is positive down

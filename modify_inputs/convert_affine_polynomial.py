@@ -12,8 +12,8 @@ def calibrate_galvo_polynomial(commanded, offset_csv_path, degree=2):
     ----------
     commanded : (N, 2) array
         Commanded positions [gx, gy]
-    offsets : (N, 2) array
-        Measured offsets [ex, ey]
+    offset_csv_path : str
+        Path to CSV file containing offsets
     degree : int
         Polynomial degree (1=affine, 2=quadratic, 3=cubic, etc.)
     
@@ -31,15 +31,16 @@ def calibrate_galvo_polynomial(commanded, offset_csv_path, degree=2):
     df = pd.read_csv(offset_csv_path)
     offsets = df[['x', 'y']].values
     offsets = np.asarray(offsets, dtype=float)
-    #offsets = offsets * 1/398.64
-    #commanded = commanded.transpose(1, 2, 0).reshape(-1, 2)
-    #offsets = offsets.reshape(-1, 2)
+
+    # changes y direction to normal x and y convention
+    offsets[:,0] = offsets[:,0]
+    offsets[:,1] = - offsets[:,1]
+
+    #offsets = offsets * 1/398.64 
 
     # Convert to numpy arrays
     commanded = np.asarray(commanded, dtype=float)
-    #offsets = np.asarray(offsets, dtype=float)
-    #print(f"COMMANDED{commanded}")
-    #print(f"OFFSETS = {offsets}")
+
     # Input validation
     if commanded.ndim != 2 or commanded.shape[1] != 2:
         raise ValueError("commanded must have shape (N, 2)")
@@ -49,13 +50,10 @@ def calibrate_galvo_polynomial(commanded, offset_csv_path, degree=2):
         raise ValueError("Need at least 3 points for fit")
     
     N = commanded.shape[0]
-    gx = - commanded[:, 0]
+    gx = commanded[:, 0]
     gy = commanded[:, 1]
     
     # Build polynomial features
-    # degree=1: [1, x, y]
-    # degree=2: [1, x, y, x², xy, y²]
-    # degree=3: [1, x, y, x², xy, y², x³, x²y, xy², y³]
     features = []
     for d in range(degree + 1):
         for i in range(d + 1):
@@ -77,12 +75,32 @@ def calibrate_galvo_polynomial(commanded, offset_csv_path, degree=2):
     ])
     residuals = offsets - fitted_offsets
     
+    # Calculate statistics for offsets
+    offset_x = offsets[:, 0]
+    offset_y = offsets[:, 1]
+    
+    # Statistics for residuals
+    res_x = residuals[:, 0]
+    res_y = residuals[:, 1]
+    
     stats = {
-        'rms_error_x': np.sqrt(np.mean(residuals[:, 0]**2)),
-        'rms_error_y': np.sqrt(np.mean(residuals[:, 1]**2)),
-        'rms_error_total': np.sqrt(np.mean(residuals**2)),
-        'max_error_x': np.max(np.abs(residuals[:, 0])),
-        'max_error_y': np.max(np.abs(residuals[:, 1])),
+        # Offset statistics
+        'offset_mean_x': np.mean(offset_x),
+        'offset_mean_y': np.mean(offset_y),
+        'offset_mean_total': np.mean(np.sqrt(offset_x**2 + offset_y**2)),
+        'offset_rms_x': np.sqrt(np.mean(offset_x**2)),
+        'offset_rms_y': np.sqrt(np.mean(offset_y**2)),
+        'offset_rms_total': np.sqrt(np.mean(offset_x**2 + offset_y**2)),
+        
+        # Residual statistics
+        'residual_mean_x': np.mean(res_x),
+        'residual_mean_y': np.mean(res_y),
+        'residual_mean_total': np.mean(np.sqrt(res_x**2 + res_y**2)),
+        'residual_rms_x': np.sqrt(np.mean(res_x**2)),
+        'residual_rms_y': np.sqrt(np.mean(res_y**2)),
+        'residual_rms_total': np.sqrt(np.mean(res_x**2 + res_y**2)),
+        
+        # Additional stats
         'num_points': N,
         'degree': degree,
         'num_params': len(params_x),
@@ -132,7 +150,7 @@ def convert_positions_polynomial(commanded, params_x, params_y, degree=2):
     
     #print(f"CORRECTIONS{corrections}")
     # Apply corrections
-    corrected = commanded + corrections
+    corrected = commanded - corrections
     
     #print(corrected)
 

@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def create_grid(grid_size=9, spacing=5):
     """
-    Create a chessboard grid of points.
+    Create a chessboard grid of points ordered from top-left to bottom-right.
     
     Parameters:
     -----------
@@ -16,18 +17,18 @@ def create_grid(grid_size=9, spacing=5):
     Returns:
     --------
     grid_points : (N, 2) array
-        Array of grid coordinates
+        Array of grid coordinates ordered from top-left to bottom-right
     """
     half = (grid_size - 1) / 2
     x = np.arange(-half, half + 1) * spacing
     y = np.arange(-half, half + 1) * spacing
-    xx, yy = np.meshgrid(x, y)
+    
+    # Create meshgrid with rows from top to bottom (y descending)
+    xx, yy = np.meshgrid(x, y[::-1])
     
     # Reshape to (N, 2)
     grid_points = np.column_stack([xx.ravel(), yy.ravel()])
-    
     return grid_points
-
 
 def load_csv_as_array(csv_file):
     """
@@ -49,17 +50,21 @@ def plot_data_with_grid(csv_file1, csv_file2, theta=0.00000000001, grid_size=9, 
         colors = ['black', 'blue', 'red']
     
     if labels is None:
-        labels = ['Original Grid', 'Original_measuremts', 'Modified measurements']
+        labels = ['Grid', 'CSV1', 'CSV3']
     
     # Step 1: Create the grid
     grid_points = create_grid(grid_size, spacing)
-    
+    #print(grid_points)
     # Step 2: Load CSV data
     data1 = load_csv_as_array(csv_file1)
+    #print(data1)
     data2 = load_csv_as_array(csv_file2)
+    #print(data2)
     data1 += grid_points
+    #print(data1)
     data2 += grid_points
-    data2 = rotate(data2, theta)
+    #print(data2)
+    #data2 = rotate(data2, theta)
 
     # Step 3: Combine grid with data (if needed, or keep separate for plotting)
     # For plotting, we'll plot them separately with different colors
@@ -151,4 +156,4 @@ def find_theta_csv(input_file):
 
 if __name__ == "__main__":
     #theta = find_theta_csv("output_tensor_Test5.csv")
-    plot_data_with_grid("offset_data.csv","output_tensor_Test6Center_mm.csv")
+    plot_data_with_grid("offset_data_error1.csv","offset_data_error3.csv")
